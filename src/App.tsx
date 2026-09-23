@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Collection, DocumentItem, IngestionConfig, ReindexJob, ScopeResourceAllocation, ScopeType, SystemRole, TeamAllocationRecord, UserProfile } from './types';
 import { CURRENT_USER, DEFAULT_RESOURCE_ALLOCATION, INITIAL_COLLECTIONS, INITIAL_DOCUMENTS, INITIAL_TEAM_ALLOCATIONS, PRESET_USERS } from './data/mockData';
 import { DEFAULT_INGESTION_CONFIG, reindexDocument } from './utils/chunker';
+import { checkCollectionQuota } from './utils/resourceUtils';
 import { Sidebar } from './components/Sidebar';
 import { CollectionsView } from './components/CollectionsView';
 import { CollectionDetailView } from './components/CollectionDetailView';
@@ -79,6 +80,32 @@ export default function App() {
   const [isDriveModalOpen, setIsDriveModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
+  // Dark Mode State
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('nexus_dark_mode');
+      if (saved !== null) {
+        return saved === 'true';
+      }
+      return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('nexus_dark_mode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('nexus_dark_mode', 'false');
+    }
+  }, [isDarkMode]);
+
+  const handleToggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev);
+  };
+
   // Document Viewer Modal with Deep Link Target State
   const [viewingDocState, setViewingDocState] = useState<{
     doc: DocumentItem;
@@ -136,7 +163,26 @@ export default function App() {
     showToast(`Collection "${newCol.name}" created successfully.`);
   };
 
-  const handleDriveImportComplete = (newDocs: DocumentItem[]) => {
+  const handleDriveImportComplete = (newDocs: DocumentItem[]): boolean => {
+    if (selectedCollectionId) {
+      const targetCol = collections.find((c) => c.id === selectedCollectionId);
+      if (targetCol) {
+        const totalIncomingBytes = newDocs.reduce((acc, d) => acc + (d.sizeBytes || 0), 0);
+        const quotaCheck = checkCollectionQuota(
+          targetCol,
+          totalIncomingBytes,
+          documents,
+          scopeResourceAllocation,
+          teamAllocations
+        );
+
+        if (!quotaCheck.allowed) {
+          showToast(`⚠️ Storage Quota Exceeded: ${quotaCheck.reason || 'Operation blocked by quota limits.'}`);
+          return false;
+        }
+      }
+    }
+
     setDocuments((prev) => [...newDocs, ...prev]);
     if (selectedCollectionId) {
       const addedChunks = newDocs.reduce((acc, d) => acc + d.chunkCount, 0);
@@ -154,9 +200,28 @@ export default function App() {
       );
     }
     showToast(`Ingested ${newDocs.length} document(s) from Drive with ${ingestionConfig.maxChunkSizeTokens}t chunks.`);
+    return true;
   };
 
-  const handleUploadComplete = (newDoc: DocumentItem) => {
+  const handleUploadComplete = (newDoc: DocumentItem): boolean => {
+    if (selectedCollectionId) {
+      const targetCol = collections.find((c) => c.id === selectedCollectionId);
+      if (targetCol) {
+        const quotaCheck = checkCollectionQuota(
+          targetCol,
+          newDoc.sizeBytes || 0,
+          documents,
+          scopeResourceAllocation,
+          teamAllocations
+        );
+
+        if (!quotaCheck.allowed) {
+          showToast(`⚠️ Storage Quota Exceeded: ${quotaCheck.reason || 'Upload blocked by storage limits.'}`);
+          return false;
+        }
+      }
+    }
+
     setDocuments((prev) => [newDoc, ...prev]);
     if (selectedCollectionId) {
       setCollections((prev) =>
@@ -173,6 +238,7 @@ export default function App() {
       );
     }
     showToast(`Document "${newDoc.title}" extracted and ingested with active token window.`);
+    return true;
   };
 
   const handleDeleteDocument = (docId: string) => {
@@ -274,7 +340,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-neutral-50 text-neutral-900 font-sans antialiased">
+    <div className="flex h-screen w-screen overflow-hidden bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 font-sans antialiased transition-colors">
       {/* Left-Hand Vertical Rail Navigation */}
       <Sidebar
         activeView={activeView}
@@ -301,6 +367,8 @@ export default function App() {
         onOpenNewCollection={() => setIsNewCollectionOpen(true)}
         currentUser={currentUser}
         onChangeUserRole={handleSwitchUserRole}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={handleToggleDarkMode}
       />
 
       {/* Main Content Area (Updates on the right) */}
@@ -425,7 +493,6 @@ export default function App() {
           onClose={() => setActiveTeamModalRecord(null)}
           onSaveAllocations={(updatedRecord) => {
             handleUpdateTeamAllocation(updatedRecord);
-            setActiveTeamModalRecord(null);
           }}
         />
       )}

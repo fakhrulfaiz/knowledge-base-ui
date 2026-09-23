@@ -18,7 +18,7 @@ interface UploadModalProps {
   collection: Collection;
   ingestionConfig?: IngestionConfig;
   onClose: () => void;
-  onUploadComplete: (newDoc: DocumentItem) => void;
+  onUploadComplete: (newDoc: DocumentItem) => boolean | void;
 }
 
 const SAMPLE_PRESETS = [
@@ -133,33 +133,35 @@ export const UploadModal: React.FC<UploadModalProps> = ({
       pages,
     };
 
-    onUploadComplete(newDoc);
+    const success = onUploadComplete(newDoc);
     setIsProcessing(false);
-    onClose();
+    if (success !== false) {
+      onClose();
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-neutral-900/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden border border-neutral-300">
+      <div className="w-full max-w-2xl bg-white dark:bg-neutral-900 rounded-xl shadow-2xl flex flex-col overflow-hidden border border-neutral-300 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100">
         {/* Header */}
-        <div className="h-14 px-6 bg-white border-b border-neutral-200 flex items-center justify-between shrink-0">
+        <div className="h-14 px-6 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded bg-neutral-100 text-neutral-800">
+            <div className="p-1.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
               <Upload className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-neutral-900">
+              <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
                 Direct Document Upload &amp; Ingestion
               </h2>
-              <div className="text-[11px] text-neutral-400">
-                Target Collection: <strong className="text-neutral-700">{collection.name}</strong>
+              <div className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                Target Collection: <strong className="text-neutral-700 dark:text-neutral-300">{collection.name}</strong>
               </div>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700 rounded transition-colors cursor-pointer"
+            className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 rounded transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -167,12 +169,12 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
         {/* Processing State Overlay */}
         {isProcessing && (
-          <div className="absolute inset-0 z-20 bg-white/95 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center">
-            <div className="w-12 h-12 rounded-full border-3 border-neutral-200 border-t-neutral-900 animate-spin mb-4" />
-            <h3 className="text-sm font-semibold text-neutral-900">
+          <div className="absolute inset-0 z-20 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-12 h-12 rounded-full border-3 border-neutral-200 dark:border-neutral-700 border-t-neutral-900 dark:border-t-neutral-100 animate-spin mb-4" />
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
               Extracting &amp; Chunking Document
             </h3>
-            <p className="text-xs text-neutral-500 font-mono mt-1 max-w-md">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 font-mono mt-1 max-w-md">
               {stepMessage}
             </p>
           </div>
@@ -182,7 +184,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         <div className="p-6 space-y-4 overflow-y-auto text-xs">
           {/* Preset Selectors */}
           <div>
-            <label className="text-[11px] font-semibold text-neutral-600 block mb-1.5">
+            <label className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 block mb-1.5">
               Select Enterprise Document Template or Upload File:
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -193,7 +195,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                   className={`p-3 rounded-lg border cursor-pointer transition-all ${
                     selectedPresetIndex === idx
                       ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                      : 'bg-neutral-50 hover:bg-neutral-100 border-neutral-200 text-neutral-800'
+                      : 'bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -207,7 +209,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                   <div className="font-semibold text-xs line-clamp-1">
                     {preset.title}
                   </div>
-                  <p className={`text-[11px] mt-1 line-clamp-2 ${selectedPresetIndex === idx ? 'text-blue-100' : 'text-neutral-500'}`}>
+                  <p className={`text-[11px] mt-1 line-clamp-2 ${selectedPresetIndex === idx ? 'text-blue-100' : 'text-neutral-500 dark:text-neutral-400'}`}>
                     {preset.summary}
                   </p>
                 </div>
@@ -216,84 +218,84 @@ export const UploadModal: React.FC<UploadModalProps> = ({
           </div>
 
           {/* Document Metadata Inputs */}
-          <div className="space-y-3 pt-2 border-t border-neutral-100">
+          <div className="space-y-3 pt-2 border-t border-neutral-100 dark:border-neutral-800">
             <div>
-              <label className="text-[11px] font-semibold text-neutral-600 block mb-1">
+              <label className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 block mb-1">
                 Document Title
               </label>
               <input
                 type="text"
                 value={docTitle}
                 onChange={(e) => setDocTitle(e.target.value)}
-                className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-hidden focus:border-neutral-400"
+                className="w-full px-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md text-xs text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-hidden focus:border-neutral-400 dark:focus:border-neutral-500"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-semibold text-neutral-600 block mb-1">
+                <label className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 block mb-1">
                   Filename
                 </label>
                 <input
                   type="text"
                   value={filename}
                   onChange={(e) => setFilename(e.target.value)}
-                  className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-md text-xs text-neutral-900 font-mono focus:outline-hidden focus:border-neutral-400"
+                  className="w-full px-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md text-xs text-neutral-900 dark:text-neutral-100 font-mono focus:outline-hidden focus:border-neutral-400 dark:focus:border-neutral-500"
                 />
               </div>
               <div>
-                <label className="text-[11px] font-semibold text-neutral-600 block mb-1">
+                <label className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 block mb-1">
                   Format
                 </label>
                 <select
                   value={fileType}
                   onChange={(e) => setFileType(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-md text-xs text-neutral-900 focus:outline-hidden focus:border-neutral-400"
+                  className="w-full px-3 py-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md text-xs text-neutral-900 dark:text-neutral-100 focus:outline-hidden focus:border-neutral-400 dark:focus:border-neutral-500"
                 >
-                  <option value="pdf">PDF Document (.pdf)</option>
-                  <option value="docx">Word Document (.docx)</option>
-                  <option value="md">Markdown (.md)</option>
-                  <option value="report">Engineering Report (.report)</option>
+                  <option value="pdf" className="dark:bg-neutral-800">PDF Document (.pdf)</option>
+                  <option value="docx" className="dark:bg-neutral-800">Word Document (.docx)</option>
+                  <option value="md" className="dark:bg-neutral-800">Markdown (.md)</option>
+                  <option value="report" className="dark:bg-neutral-800">Engineering Report (.report)</option>
                 </select>
               </div>
             </div>
           </div>
 
           {/* Chunking Pipeline Specs Preview */}
-          <div className="p-3 bg-neutral-100 rounded-lg border border-neutral-200 text-[11px] text-neutral-600 space-y-1 font-mono">
-            <div className="font-semibold text-neutral-800 font-sans flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-neutral-500" />
+          <div className="p-3 bg-neutral-100 dark:bg-neutral-800/60 rounded-lg border border-neutral-200 dark:border-neutral-700 text-[11px] text-neutral-600 dark:text-neutral-300 space-y-1 font-mono">
+            <div className="font-semibold text-neutral-800 dark:text-neutral-200 font-sans flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
               <span>Chunking Pipeline Parameters:</span>
             </div>
             <div className="flex justify-between">
               <span>Token Chunk Target:</span>
-              <span className="text-neutral-900 font-semibold">150–220 tokens</span>
+              <span className="text-neutral-900 dark:text-neutral-100 font-semibold">150–220 tokens</span>
             </div>
             <div className="flex justify-between">
               <span>Overlap Window:</span>
-              <span className="text-neutral-900 font-semibold">25 tokens</span>
+              <span className="text-neutral-900 dark:text-neutral-100 font-semibold">25 tokens</span>
             </div>
             <div className="flex justify-between">
               <span>Deep-Link Offset Preservation:</span>
-              <span className="text-emerald-700 font-semibold">Enabled (Character Span Mapping)</span>
+              <span className="text-emerald-700 dark:text-emerald-400 font-semibold">Enabled (Character Span Mapping)</span>
             </div>
-            <div className="flex justify-between pt-1 border-t border-neutral-200">
+            <div className="flex justify-between pt-1 border-t border-neutral-200 dark:border-neutral-700">
               <span>Collection Storage Quota:</span>
-              <span className="text-blue-700 font-semibold">{collection.allocatedGb || 10} GB ({collection.scope === 'team' ? 'Team Allocated' : collection.scope === 'mine' ? 'Personal Cap' : 'Org Pool'})</span>
+              <span className="text-blue-700 dark:text-blue-400 font-semibold">{collection.allocatedGb || 10} GB ({collection.scope === 'team' ? 'Team Allocated' : collection.scope === 'mine' ? 'Personal Cap' : 'Org Pool'})</span>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="h-14 px-6 bg-neutral-50 border-t border-neutral-200 flex items-center justify-between shrink-0">
-          <div className="text-xs text-neutral-400">
+        <div className="h-14 px-6 bg-neutral-50 dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between shrink-0">
+          <div className="text-xs text-neutral-400 dark:text-neutral-500">
             Estimated ~6 chunks will be created
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-3 py-1.5 text-xs text-neutral-600 hover:text-neutral-900 font-medium cursor-pointer"
+              className="px-3 py-1.5 text-xs text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 font-medium cursor-pointer"
             >
               Cancel
             </button>

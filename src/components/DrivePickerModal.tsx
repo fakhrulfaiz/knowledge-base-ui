@@ -23,7 +23,7 @@ interface DrivePickerModalProps {
   existingDocTitles: string[];
   ingestionConfig?: IngestionConfig;
   onClose: () => void;
-  onImportComplete: (newDocs: DocumentItem[]) => void;
+  onImportComplete: (newDocs: DocumentItem[]) => boolean | void;
 }
 
 export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
@@ -109,33 +109,35 @@ export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
       };
     });
 
-    onImportComplete(newDocs);
+    const success = onImportComplete(newDocs);
     setIsIngesting(false);
-    onClose();
+    if (success !== false) {
+      onClose();
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-neutral-900/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-4xl h-[80vh] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden border border-neutral-300">
+      <div className="w-full max-w-4xl h-[80vh] bg-white dark:bg-neutral-900 rounded-xl shadow-2xl flex flex-col overflow-hidden border border-neutral-300 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100">
         {/* Header */}
-        <div className="h-14 px-6 bg-white border-b border-neutral-200 flex items-center justify-between shrink-0">
+        <div className="h-14 px-6 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded bg-neutral-100 text-neutral-800">
+            <div className="p-1.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
               <HardDrive className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-neutral-900">
+              <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
                 Import from Corporate Drive
               </h2>
-              <div className="text-[11px] text-neutral-400">
-                Target Collection: <strong className="text-neutral-700">{collection.name}</strong>
+              <div className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                Target Collection: <strong className="text-neutral-700 dark:text-neutral-300">{collection.name}</strong>
               </div>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-neutral-100 text-neutral-400 hover:text-neutral-700 rounded transition-colors cursor-pointer"
+            className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 rounded transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -143,10 +145,10 @@ export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
 
         {/* Ingesting Progress Overlay */}
         {isIngesting && (
-          <div className="absolute inset-0 z-20 bg-white/95 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center">
-            <div className="w-12 h-12 rounded-full border-3 border-neutral-200 border-t-neutral-900 animate-spin mb-4" />
-            <h3 className="text-sm font-semibold text-neutral-900">Ingesting into Collection</h3>
-            <p className="text-xs text-neutral-500 font-mono mt-1 max-w-md">
+          <div className="absolute inset-0 z-20 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-12 h-12 rounded-full border-3 border-neutral-200 dark:border-neutral-700 border-t-neutral-900 dark:border-t-neutral-100 animate-spin mb-4" />
+            <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Ingesting into Collection</h3>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 font-mono mt-1 max-w-md">
               {ingestionStep}
             </p>
           </div>
@@ -155,8 +157,8 @@ export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
         {/* Main Drive Browser Split: Folders on Left, Files on Right */}
         <div className="flex-1 flex overflow-hidden">
           {/* Folders List */}
-          <div className="w-64 bg-neutral-50 border-r border-neutral-200 p-3 flex flex-col text-xs shrink-0">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 mb-2 px-2">
+          <div className="w-64 bg-neutral-50 dark:bg-neutral-950 border-r border-neutral-200 dark:border-neutral-800 p-3 flex flex-col text-xs shrink-0">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 mb-2 px-2">
               Folders
             </div>
             <div className="space-y-1">
@@ -174,14 +176,14 @@ export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
                     className={`w-full text-left px-2.5 py-2 rounded-md flex items-center justify-between transition-colors cursor-pointer ${
                       isSelected
                         ? 'bg-blue-600 text-white font-medium shadow-2xs'
-                        : 'text-neutral-600 hover:bg-neutral-200/70 hover:text-neutral-900'
+                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/70 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100'
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate">
                       {isSelected ? (
                         <FolderOpen className="w-3.5 h-3.5 shrink-0" />
                       ) : (
-                        <Folder className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                        <Folder className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 shrink-0" />
                       )}
                       <span className="truncate">{folder.name}</span>
                     </div>
@@ -193,28 +195,28 @@ export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
               })}
             </div>
 
-            <div className="mt-auto p-2 rounded bg-neutral-100 border border-neutral-200 text-[11px] text-neutral-500">
-              <span className="font-semibold text-neutral-700 block mb-0.5">Automated Extraction</span>
+            <div className="mt-auto p-2 rounded bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-[11px] text-neutral-500 dark:text-neutral-400">
+              <span className="font-semibold text-neutral-700 dark:text-neutral-300 block mb-0.5">Automated Extraction</span>
               Files are automatically parsed, sliced into token chunks, and registered with page offsets.
             </div>
           </div>
 
           {/* Files List View */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-white">
+          <div className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-neutral-900">
             {/* Search Filter Bar */}
-            <div className="p-3 border-b border-neutral-200 flex items-center justify-between gap-3">
+            <div className="p-3 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between gap-3">
               <div className="relative flex-1">
-                <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Search files in Drive..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-neutral-50 border border-neutral-200 rounded-md focus:outline-hidden focus:border-neutral-400"
+                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-hidden focus:border-neutral-400 dark:focus:border-neutral-500"
                 />
               </div>
 
-              <div className="text-xs text-neutral-400 font-mono tabular-nums">
+              <div className="text-xs text-neutral-400 dark:text-neutral-500 font-mono tabular-nums">
                 {selectedFileIds.size} selected
               </div>
             </div>
@@ -231,10 +233,10 @@ export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
                     onClick={() => !isAlreadyIngested && toggleFileSelect(file.id)}
                     className={`p-3 rounded-lg border text-xs transition-all flex items-start justify-between gap-3 ${
                       isAlreadyIngested
-                        ? 'opacity-50 bg-neutral-50 border-neutral-200 cursor-not-allowed'
+                        ? 'opacity-50 bg-neutral-50 dark:bg-neutral-800/40 border-neutral-200 dark:border-neutral-800 cursor-not-allowed'
                         : isSelected
                         ? 'bg-blue-600 text-white border-blue-600 shadow-xs cursor-pointer'
-                        : 'bg-white hover:bg-neutral-50 border-neutral-200 text-neutral-900 cursor-pointer'
+                        : 'bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 cursor-pointer'
                     }`}
                   >
                     <div className="flex items-start gap-3 min-w-0">
@@ -242,7 +244,7 @@ export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
                         className={`w-4 h-4 rounded border mt-0.5 flex items-center justify-center shrink-0 ${
                           isSelected
                             ? 'bg-white border-white text-blue-600'
-                            : 'border-neutral-300 bg-white'
+                            : 'border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800'
                         }`}
                       >
                         {isSelected && <Check className="w-3 h-3 stroke-3" />}
@@ -250,11 +252,11 @@ export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
 
                       <div className="min-w-0">
                         <div className="font-semibold truncate flex items-center gap-2">
-                          <span className={isSelected ? 'text-white' : 'text-neutral-900'}>
+                          <span className={isSelected ? 'text-white' : 'text-neutral-900 dark:text-neutral-100'}>
                             {file.title}
                           </span>
                           {isAlreadyIngested && (
-                            <span className="text-[10px] text-neutral-400 uppercase font-mono">
+                            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-mono">
                               Already Ingested
                             </span>
                           )}
@@ -262,7 +264,7 @@ export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
 
                         <p
                           className={`text-[11px] mt-0.5 line-clamp-1 ${
-                            isSelected ? 'text-blue-100' : 'text-neutral-500'
+                            isSelected ? 'text-blue-100' : 'text-neutral-500 dark:text-neutral-400'
                           }`}
                         >
                           {file.previewSummary}
@@ -270,7 +272,7 @@ export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
 
                         <div
                           className={`mt-1.5 flex items-center gap-2 text-[10px] font-mono tabular-nums ${
-                            isSelected ? 'text-blue-200' : 'text-neutral-400'
+                            isSelected ? 'text-blue-200' : 'text-neutral-400 dark:text-neutral-500'
                           }`}
                         >
                           <span>{file.filename}</span>
@@ -289,17 +291,17 @@ export const DrivePickerModal: React.FC<DrivePickerModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="h-14 px-6 bg-neutral-50 border-t border-neutral-200 flex items-center justify-between shrink-0">
-          <div className="text-xs text-neutral-500 font-mono tabular-nums flex items-center gap-2">
+        <div className="h-14 px-6 bg-neutral-50 dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between shrink-0">
+          <div className="text-xs text-neutral-500 dark:text-neutral-400 font-mono tabular-nums flex items-center gap-2">
             <span>{selectedFileIds.size} file(s) selected</span>
             <span>·</span>
-            <span className="text-blue-700 font-semibold font-sans">Quota: {collection.allocatedGb || 10} GB</span>
+            <span className="text-blue-700 dark:text-blue-400 font-semibold font-sans">Quota: {collection.allocatedGb || 10} GB</span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-3 py-1.5 text-xs text-neutral-600 hover:text-neutral-900 font-medium transition-colors cursor-pointer"
+              className="px-3 py-1.5 text-xs text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 font-medium transition-colors cursor-pointer"
             >
               Cancel
             </button>

@@ -2,5 +2,7 @@
   "name": "Nexus Enterprise Knowledge & Search Platform",
   "description": "Enterprise-grade document collections, chunk-level semantic retrieval, relationship graphs, and deep-linked citation reader.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
